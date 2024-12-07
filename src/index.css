@@ -299,7 +299,7 @@ body {
   flex-direction: column;
   justify-content: start;
   height: 350px;
-  width: 35vh; /* editable */
+  width: 70vh; /* editable */
   background-color: #f1f1f1;
   border-radius: 10px;
   margin-bottom: 20px;
