@@ -8,6 +8,29 @@ import user from "./assets/user-1.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { sendPasswordResetEmail } from "firebase/auth";
+
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBLkF17XGL1idTWHAwsQmpEfXcCnMoLr8k",
+  authDomain: "exam-a734f.firebaseapp.com",
+  projectId: "exam-a734f",
+  storageBucket: "exam-a734f.firebasestorage.app",
+  messagingSenderId: "400595651074",
+  appId: "1:400595651074:web:069a3ce68d3dde9125351b",
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+export { auth };
+
+
 
 export default function App() {
   const [login, setLogin] = useState(false);
@@ -32,6 +55,7 @@ export default function App() {
     setLogin(false);
     setForgotPassword(false);
     setDownload(false);
+
   }
 
   function handleDownload() {
@@ -128,81 +152,204 @@ function Registrtion({
   );
 }
 
+
 function SignUp({ onSignup, onLogin }) {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await createUserWithEmailAndPassword(auth, email, password);
+      alert("Sign up successful!");
+      setLoading(false);
+      onSignup(); // Close the sign-up form after success
+    } catch (err) {
+      setLoading(false);
+      setError(err.message);
+    }
+  };
+
   return (
     <div className="signup">
       <h1>Sign Up</h1>
-      <form>
-        <input type="text" placeholder="User Name" />
-        <input type="email" placeholder="Email" />
-        <input type="password" placeholder="Password" />
-        <input type="password" placeholder="Confirm Password" />
+      <form onSubmit={handleSignup}>
+        <input
+          type="text"
+          placeholder="User Name"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+        {error && <p style={{ color: "red" }}>{error}</p>}
         <h4>
           Already have an account?{" "}
           <a href="#Login" onClick={onLogin}>
             <span>Login</span>
           </a>
         </h4>
-        <input onClick={onSignup} type="submit" value="Sign Up" />
+        <input type="submit" value={loading ? "Signing Up..." : "Sign Up"} />
       </form>
     </div>
   );
 }
 
+
+
 function Login({ onLogin, forgotPassword, onSetPassword, onSignup }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      setLoading(true);
+      await signInWithEmailAndPassword(auth, email, password);
+      alert("Login successful!");
+      setLoading(false);
+      onLogin(); // Close the login form after success
+    } catch (err) {
+      setLoading(false);
+      setError(err.message);
+    }
+  };
+
   return (
     <div className="login">
-      <h1 className={forgotPassword ? "hidden" : ""}>Login</h1>
-      <form>
-        <input
-          className={forgotPassword ? "hidden" : ""}
-          type="email"
-          placeholder="Email"
-        />
-        <input
-          className={forgotPassword ? "hidden" : ""}
-          type="password"
-          placeholder="Password"
-        />
-        <h4>
-          <a
-            className={forgotPassword ? "hidden" : ""}
-            id="forgot"
-            onClick={onSetPassword}
-            href="#forgot-password"
-          >
-            <span>Forgot password?</span>
-          </a>
-        </h4>
+      {!forgotPassword && <h1>Login</h1>}
+      <form onSubmit={handleLogin}>
+        {!forgotPassword && (
+          <>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {error && <p style={{ color: "red" }}>{error}</p>}
+            <h4>
+              <a href="#forgot-password" onClick={onSetPassword}>
+                <span>Forgot password?</span>
+              </a>
+            </h4>
+          </>
+        )}
         {forgotPassword && <ForgotPassword onSetPassword={onSetPassword} />}
         <h4>
-          Haven't you an account?{" "}
-          <a href="#Login" onClick={onSignup}>
+          Don't have an account?{" "}
+          <a href="#signup" onClick={onSignup}>
             <span>Sign up</span>
           </a>
         </h4>
-        <input
-          className={forgotPassword ? "hidden" : ""}
-          onClick={onLogin}
-          type="submit"
-          value="Login"
-        />
+        {!forgotPassword && (
+          <input type="submit" value={loading ? "Logging in..." : "Login"} />
+        )}
       </form>
     </div>
   );
 }
 
+
+
+
+
+
+
 function ForgotPassword({ onSetPassword }) {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+
+    try {
+      setLoading(true);
+      await sendPasswordResetEmail(auth, email);
+      setMessage("Password reset email sent! Check your inbox.");
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      setError(err.message);
+    }
+  };
+
   return (
     <div className="forgot-password">
       <h1>Forgot Password</h1>
-      <form>
-        <input type="email" placeholder="Email" />
-        <input onClick={onSetPassword} type="submit" value="Reset Password" />
+      <form onSubmit={handleResetPassword}>
+        <input
+          type="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        {message && <p style={{ color: "green" }}>{message}</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        <input
+          type="submit"
+          value={loading ? "Sending..." : "Reset Password"}
+        />
+        <h4>
+          <a href="#login" onClick={onSetPassword}>
+            <span>Back to Login</span>
+          </a>
+        </h4>
       </form>
     </div>
   );
 }
+
+
 
 function DownloadApp({ onDownload }) {
   return (
